@@ -5,6 +5,7 @@ import {
   StyleSheet,
   ScrollView,
   ActivityIndicator,
+  useColorScheme,
 } from 'react-native';
 import React, { useState, useEffect } from 'react';
 import { Audio } from 'expo-av';
@@ -28,6 +29,8 @@ export default function App() {
   const [audioPermission, setAudioPermission] = useState<boolean | null>(null);
   const [savedRecordings, setSavedRecordings] = useState<Recording[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const colorScheme = useColorScheme();
+  const [isDarkMode, setIsDarkMode] = useState(colorScheme === 'dark');
 
   useEffect(() => {
     getPermission();
@@ -46,6 +49,14 @@ export default function App() {
       });
     };
   }, []);
+
+  useEffect(() => {
+    setIsDarkMode(colorScheme === 'dark');
+  }, [colorScheme]);
+
+  function toggleDarkMode() {
+    setIsDarkMode((prevState) => !prevState);
+  }
 
   async function getPermission() {
     await Audio.requestPermissionsAsync()
@@ -258,10 +269,33 @@ export default function App() {
   }
 
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.container,
+        isDarkMode ? styles.containerDark : styles.containerLight,
+      ]}
+    >
+      <View style={styles.topBar}>
+        <Text
+          style={[
+            styles.listTitle,
+            isDarkMode ? styles.listTitleDark : styles.listTitleLight,
+          ]}
+        >
+          Saved Recordings
+        </Text>
+        <TouchableOpacity onPress={toggleDarkMode}>
+          <FontAwesome
+            name={isDarkMode ? 'moon-o' : 'sun-o'}
+            size={24}
+            color={isDarkMode ? 'white' : 'black'}
+          />
+        </TouchableOpacity>
+      </View>
+
       {/* Recordings List */}
       <View style={styles.listContainer}>
-        <Text style={styles.listTitle}>Saved Recordings</Text>
+        {/* <Text style={styles.listTitle}>Saved Recordings</Text> */}
         {isLoading ? (
           <ActivityIndicator size="large" color="#0000ff" />
         ) : (
@@ -338,9 +372,32 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
     paddingTop: 50,
   },
+  containerLight: {
+    backgroundColor: '#f5f5f5',
+  },
+  containerDark: {
+    backgroundColor: '#121212',
+  },
+  topBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    marginBottom: 20,
+  },
+  listTitleLight: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: 'black',
+  },
+  listTitleDark: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: 'white',
+  },
+
   listContainer: {
     flex: 1,
     paddingHorizontal: 20,
