@@ -6,16 +6,19 @@ import {
   ScrollView,
   ActivityIndicator,
   useColorScheme,
+  Alert,
 } from 'react-native';
 import React, { useState, useEffect } from 'react';
 import { Audio } from 'expo-av';
 import * as FileSystem from 'expo-file-system';
 import { FontAwesome } from '@expo/vector-icons';
 import { RecordingOptionsPresets } from 'expo-av/build/Audio';
+import { StatusBar } from 'expo-status-bar';
 
 interface Recording {
   uri: string;
   filename: string;
+  showName: string;
   date: Date;
   duration?: number;
   isPlaying: boolean;
@@ -92,6 +95,7 @@ export default function App() {
           );
           return {
             filename,
+            showName: filename.split('_')[0],
             uri: fileInfo.uri,
             date: fileInfo.exists
               ? new Date(fileInfo.modificationTime! * 1000)
@@ -110,6 +114,46 @@ export default function App() {
     } finally {
       setIsLoading(false);
     }
+  }
+
+  async function renameRecording(index: number) {
+    const recording = savedRecordings[index];
+
+    // Prompt for new name
+    Alert.prompt(
+      'Rename Recording',
+      'Enter a new name for the recording:',
+      async (newName) => {
+        if (newName && newName.trim()) {
+          const newFileName = `${newName.trim()}_${
+            recording.filename.split('_')[1]
+          }`;
+          const newUri = `${FileSystem.documentDirectory}recordings/${newFileName}`;
+
+          try {
+            // Rename file in filesystem
+            await FileSystem.moveAsync({
+              from: recording.uri,
+              to: newUri,
+            });
+
+            // Update state to reflect the renamed file
+            const updatedRecordings = [...savedRecordings];
+            updatedRecordings[index] = {
+              ...recording,
+              uri: newUri,
+              filename: newFileName,
+              showName: newName.trim(),
+            };
+            setSavedRecordings(updatedRecordings);
+          } catch (error) {
+            console.error('Failed to rename recording:', error);
+          }
+        }
+      },
+      'plain-text',
+      recording.showName
+    );
   }
 
   async function startRecording() {
@@ -141,7 +185,11 @@ export default function App() {
         await recording?.stopAndUnloadAsync();
         const recordingUri = recording?.getURI();
 
-        const fileName = `recording-${Date.now()}.m4a`;
+        const timeElapsed = Date.now();
+        const today = new Date(timeElapsed).toISOString();
+        // const fileName = `${today}.m4a`;
+
+        const fileName = `New Recording_${today}.m4a`;
 
         await FileSystem.makeDirectoryAsync(
           FileSystem.documentDirectory + 'recordings/',
@@ -275,6 +323,7 @@ export default function App() {
         isDarkMode ? styles.containerDark : styles.containerLight,
       ]}
     >
+      <StatusBar style={isDarkMode ? 'light' : 'dark'} />
       <View style={styles.topBar}>
         <Text
           style={[
@@ -306,7 +355,7 @@ export default function App() {
                   <Text style={styles.recordingDate}>
                     {formatDate(recording.date)}
                   </Text>
-                  <Text style={styles.recordingName}>{recording.filename}</Text>
+                  <Text style={styles.recordingName}>{recording.showName}</Text>
                 </View>
                 <View style={styles.recordingControls}>
                   <TouchableOpacity
@@ -332,6 +381,12 @@ export default function App() {
                       size={24}
                       color="white"
                     />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => renameRecording(index)}
+                    style={styles.renameButton}
+                  >
+                    <FontAwesome name="edit" size={24} color="white" />
                   </TouchableOpacity>
                   <TouchableOpacity
                     onPress={() => deleteRecording(index)}
@@ -441,6 +496,12 @@ const styles = StyleSheet.create({
   },
   playButton: {
     backgroundColor: '#4CAF50',
+    padding: 10,
+    borderRadius: 25,
+    marginRight: 10,
+  },
+  renameButton: {
+    backgroundColor: '#FFC107',
     padding: 10,
     borderRadius: 25,
     marginRight: 10,
