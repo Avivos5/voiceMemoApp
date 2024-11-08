@@ -14,6 +14,9 @@ import * as FileSystem from 'expo-file-system';
 import { FontAwesome } from '@expo/vector-icons';
 import { RecordingOptionsPresets } from 'expo-av/build/Audio';
 import { StatusBar } from 'expo-status-bar';
+import { ThemedText } from '@/components/ThemedText';
+import { ThemedView } from '@/components/ThemedView';
+import { Colors } from '@/constants/Colors';
 
 interface Recording {
   uri: string;
@@ -33,7 +36,6 @@ export default function App() {
   const [savedRecordings, setSavedRecordings] = useState<Recording[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const colorScheme = useColorScheme();
-  const [isDarkMode, setIsDarkMode] = useState(colorScheme === 'dark');
 
   useEffect(() => {
     getPermission();
@@ -52,14 +54,6 @@ export default function App() {
       });
     };
   }, []);
-
-  useEffect(() => {
-    setIsDarkMode(colorScheme === 'dark');
-  }, [colorScheme]);
-
-  function toggleDarkMode() {
-    setIsDarkMode((prevState) => !prevState);
-  }
 
   async function getPermission() {
     await Audio.requestPermissionsAsync()
@@ -187,7 +181,6 @@ export default function App() {
 
         const timeElapsed = Date.now();
         const today = new Date(timeElapsed).toISOString();
-        // const fileName = `${today}.m4a`;
 
         const fileName = `New Recording_${today}.m4a`;
 
@@ -317,47 +310,40 @@ export default function App() {
   }
 
   return (
-    <View
-      style={[
-        styles.container,
-        isDarkMode ? styles.containerDark : styles.containerLight,
-      ]}
-    >
-      <StatusBar style={isDarkMode ? 'light' : 'dark'} />
-      <View style={styles.topBar}>
-        <Text
-          style={[
-            styles.listTitle,
-            isDarkMode ? styles.listTitleDark : styles.listTitleLight,
-          ]}
-        >
-          Saved Recordings
-        </Text>
-        <TouchableOpacity onPress={toggleDarkMode}>
-          <FontAwesome
-            name={isDarkMode ? 'moon-o' : 'sun-o'}
-            size={24}
-            color={isDarkMode ? 'white' : 'black'}
-          />
-        </TouchableOpacity>
-      </View>
-
+    <ThemedView style={styles.container}>
+      <StatusBar style={colorScheme == 'dark' ? 'light' : 'dark'} />
+      <ThemedView style={styles.topBar}>
+        <ThemedText type="title">Saved Recordings</ThemedText>
+      </ThemedView>
       {/* Recordings List */}
-      <View style={styles.listContainer}>
-        {/* <Text style={styles.listTitle}>Saved Recordings</Text> */}
+      <ThemedView style={styles.listContainer}>
         {isLoading ? (
           <ActivityIndicator size="large" color="#0000ff" />
         ) : (
           <ScrollView style={styles.scrollView}>
             {savedRecordings.map((recording, index) => (
-              <View key={recording.uri} style={styles.recordingItem}>
-                <View style={styles.recordingInfo}>
-                  <Text style={styles.recordingDate}>
+              <ThemedView
+                key={recording.uri}
+                style={styles.recordingItem}
+                colorName="backgroundSecondary"
+              >
+                <ThemedView
+                  style={styles.recordingInfo}
+                  colorName="backgroundSecondary"
+                >
+                  <TouchableOpacity onPress={() => renameRecording(index)}>
+                    <ThemedText type="title" style={styles.recordingName}>
+                      {recording.showName}
+                    </ThemedText>
+                  </TouchableOpacity>
+                  <ThemedText type="default" style={styles.recordingDate}>
                     {formatDate(recording.date)}
-                  </Text>
-                  <Text style={styles.recordingName}>{recording.showName}</Text>
-                </View>
-                <View style={styles.recordingControls}>
+                  </ThemedText>
+                </ThemedView>
+                <ThemedView
+                  style={styles.recordingControls}
+                  colorName="backgroundSecondary"
+                >
                   <TouchableOpacity
                     onPress={() => {
                       if (recording.isPlaying) {
@@ -379,30 +365,44 @@ export default function App() {
                           : 'play'
                       }
                       size={24}
-                      color="white"
+                      color={
+                        colorScheme === 'dark'
+                          ? Colors.dark.backgroundSecondary
+                          : Colors.light.backgroundSecondary
+                      }
                     />
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    onPress={() => renameRecording(index)}
-                    style={styles.renameButton}
-                  >
-                    <FontAwesome name="edit" size={24} color="white" />
                   </TouchableOpacity>
                   <TouchableOpacity
                     onPress={() => deleteRecording(index)}
                     style={styles.deleteButton}
                   >
-                    <FontAwesome name="trash" size={24} color="white" />
+                    <FontAwesome
+                      name="trash"
+                      size={24}
+                      color={
+                        colorScheme === 'dark'
+                          ? Colors.dark.backgroundSecondary
+                          : Colors.light.backgroundSecondary
+                      }
+                    />
                   </TouchableOpacity>
-                </View>
-              </View>
+                </ThemedView>
+              </ThemedView>
             ))}
           </ScrollView>
         )}
-      </View>
+      </ThemedView>
 
       {/* Recording Button */}
-      <View style={styles.recordButtonContainer}>
+      <ThemedView
+        style={[
+          styles.recordButtonContainer,
+          {
+            shadowColor:
+              colorScheme === 'dark' ? Colors.dark.text : Colors.light.text,
+          },
+        ]}
+      >
         <TouchableOpacity
           style={[
             styles.recordButton,
@@ -413,14 +413,18 @@ export default function App() {
           <FontAwesome
             name={recordingStatus === 'recording' ? 'stop-circle' : 'circle'}
             size={64}
-            color="white"
+            color={
+              colorScheme === 'dark'
+                ? Colors.dark.background
+                : Colors.light.background
+            }
           />
         </TouchableOpacity>
         <Text style={styles.recordingStatusText}>
           {recordingStatus === 'recording' ? 'Recording...' : 'Tap to Record'}
         </Text>
-      </View>
-    </View>
+      </ThemedView>
+    </ThemedView>
   );
 }
 
@@ -463,19 +467,20 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   scrollView: {
+    marginTop: 5,
     flex: 1,
   },
   recordingItem: {
-    backgroundColor: 'white',
     borderRadius: 10,
     padding: 15,
+    marginHorizontal: 5,
     marginBottom: 10,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     elevation: 2,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: { width: 1, height: 1 },
     shadowOpacity: 0.2,
     shadowRadius: 2,
   },
@@ -487,7 +492,7 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   recordingName: {
-    fontSize: 14,
+    fontSize: 20,
     marginTop: 4,
   },
   recordingControls: {
@@ -514,9 +519,8 @@ const styles = StyleSheet.create({
   recordButtonContainer: {
     alignItems: 'center',
     paddingVertical: 20,
-    backgroundColor: 'white',
-    borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
+    shadowOffset: { width: 1, height: 1 },
+    shadowOpacity: 0.6,
   },
   recordButton: {
     alignItems: 'center',
