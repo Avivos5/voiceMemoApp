@@ -1,12 +1,12 @@
 import {
   Text,
   TouchableOpacity,
-  View,
   StyleSheet,
   ScrollView,
   ActivityIndicator,
   useColorScheme,
   Alert,
+  View,
 } from 'react-native';
 import React, { useState, useEffect } from 'react';
 import { Audio } from 'expo-av';
@@ -23,7 +23,7 @@ interface Recording {
   filename: string;
   showName: string;
   date: Date;
-  duration?: number;
+  duration: string;
   isPlaying: boolean;
   isPaused: boolean;
   sound?: Audio.Sound;
@@ -87,6 +87,17 @@ export default function App() {
           const fileInfo = await FileSystem.getInfoAsync(
             recordingsDir + filename
           );
+
+          const { sound } = await Audio.Sound.createAsync({
+            uri: fileInfo.uri,
+          });
+          const status = await sound.getStatusAsync();
+          const durationInSeconds =
+            status.isLoaded && status.durationMillis
+              ? status.durationMillis / 1000
+              : 0;
+          await sound.unloadAsync();
+
           return {
             filename,
             showName: filename.split('_')[0],
@@ -94,11 +105,18 @@ export default function App() {
             date: fileInfo.exists
               ? new Date(fileInfo.modificationTime! * 1000)
               : new Date(),
+            duration: formatDuration(durationInSeconds),
             isPlaying: false,
             isPaused: false,
           };
         })
       );
+
+      function formatDuration(seconds: number): string {
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return mins > 0 ? `${mins}m${secs}s` : `${secs}s`;
+      }
 
       // Sort by date, newest first
       recordings.sort((a, b) => b.date.getTime() - a.date.getTime());
@@ -336,9 +354,20 @@ export default function App() {
                       {recording.showName}
                     </ThemedText>
                   </TouchableOpacity>
-                  <ThemedText type="default" style={styles.recordingDate}>
-                    {formatDate(recording.date)}
-                  </ThemedText>
+                  <View style={styles.recordingMetadata}>
+                    <ThemedText
+                      type="default"
+                      style={styles.recordingMetadataItem}
+                    >
+                      {formatDate(recording.date)}
+                    </ThemedText>
+                    <ThemedText
+                      type="default"
+                      style={styles.recordingMetadataItem}
+                    >
+                      {recording.duration}
+                    </ThemedText>
+                  </View>
                 </ThemedView>
                 <ThemedView
                   style={styles.recordingControls}
@@ -487,7 +516,13 @@ const styles = StyleSheet.create({
   recordingInfo: {
     flex: 1,
   },
-  recordingDate: {
+  recordingMetadata: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginRight: 30,
+  },
+  recordingMetadataItem: {
     fontSize: 12,
     color: '#666',
   },
@@ -501,12 +536,6 @@ const styles = StyleSheet.create({
   },
   playButton: {
     backgroundColor: '#4CAF50',
-    padding: 10,
-    borderRadius: 25,
-    marginRight: 10,
-  },
-  renameButton: {
-    backgroundColor: '#FFC107',
     padding: 10,
     borderRadius: 25,
     marginRight: 10,
@@ -528,7 +557,7 @@ const styles = StyleSheet.create({
     width: 128,
     height: 128,
     borderRadius: 64,
-    backgroundColor: '#FF4081',
+    backgroundColor: '#FF5252',
     marginBottom: 10,
   },
   recordingActive: {
