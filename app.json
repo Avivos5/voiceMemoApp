@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "helloWorldApp",
-    "slug": "helloWorldApp",
+    "name": "voiceMemoApp",
+    "slug": "voiceMemoApp",
     "version": "1.0.0",
     "orientation": "portrait",
     "scheme": "myapp",
