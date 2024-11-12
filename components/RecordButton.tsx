@@ -10,10 +10,10 @@ interface RecordButtonProps {
   onPress: () => void;
 }
 
-export const RecordButton: React.FC<RecordButtonProps> = ({
+export const RecordButton = ({
   recordingStatus,
   onPress,
-}) => {
+}: RecordButtonProps) => {
   const colorScheme = useColorScheme();
 
   return (

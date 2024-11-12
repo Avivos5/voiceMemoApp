@@ -17,14 +17,14 @@ interface RecordingItemProps {
   onRename: () => void;
 }
 
-export const RecordingItem: React.FC<RecordingItemProps> = ({
+export const RecordingItem = ({
   recording,
   onPlay,
   onPause,
   onResume,
   onDelete,
   onRename,
-}) => {
+}: RecordingItemProps) => {
   const colorScheme = useColorScheme();
 
   return (

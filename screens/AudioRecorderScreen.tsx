@@ -11,9 +11,9 @@ import { useAudioPermission } from '../hooks/useAudioPermission';
 import { useRecordingManager } from '../hooks/useRecordingManager';
 import styles from '@/styles/common';
 
-export const AudioRecorderScreen: React.FC = () => {
+export const AudioRecorderScreen = () => {
   const colorScheme = useColorScheme();
-  const audioPermission = useAudioPermission();
+  useAudioPermission();
   const {
     recording,
     recordingStatus,

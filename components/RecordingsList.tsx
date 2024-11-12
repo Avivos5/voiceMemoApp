@@ -15,7 +15,7 @@ interface RecordingsListProps {
   onRenameRecording: (index: number) => void;
 }
 
-export const RecordingsList: React.FC<RecordingsListProps> = ({
+export const RecordingsList = ({
   recordings,
   isLoading,
   onPlayRecording,
@@ -23,7 +23,7 @@ export const RecordingsList: React.FC<RecordingsListProps> = ({
   onResumePlayback,
   onDeleteRecording,
   onRenameRecording,
-}) => {
+}: RecordingsListProps) => {
   if (isLoading) {
     return (
       <ThemedView>
